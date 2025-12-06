@@ -1,5 +1,7 @@
 # Get Child Frame Links - Figma Plugin
 
+> **Extract all child frame links in seconds** — Perfect for sharing frame links with AI tools like Cursor
+
 A Figma plugin that extracts links to all top-most sub-frames within a selected frame or frame link. This is particularly useful when working with large frames that contain many sub-frames, making it easier to share individual frame links with tools like Cursor for building Figma designs.
 
 ## Features
@@ -58,6 +60,16 @@ npm run watch
 1. Build the plugin: `npm run build`
 2. In Figma, go to Plugins > Development > Import plugin from manifest...
 3. Select the `manifest.json` file from this directory
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request or open an Issue.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 

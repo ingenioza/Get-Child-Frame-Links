@@ -75,95 +75,114 @@ function getFrameById(nodeId: string): SceneNode | null {
 }
 
 // Handle messages from UI
-figma.ui.onmessage = async (msg) => {
+figma.ui.onmessage = (msg) => {
   if (msg.type === 'get-sub-frames') {
-    let targetFrame: SceneNode | null = null;
-    
-    if (msg.frameLink) {
-      // Extract node ID from provided link
-      const nodeId = extractNodeIdFromUrl(msg.frameLink);
-      if (!nodeId) {
+    try {
+      let targetFrame: SceneNode | null = null;
+      
+      if (msg.frameLink) {
+        // Extract node ID from provided link
+        const nodeId = extractNodeIdFromUrl(msg.frameLink);
+        if (!nodeId) {
+          figma.ui.postMessage({
+            type: 'error',
+            message: 'Invalid frame link. Please provide a valid Figma frame URL.'
+          });
+          return;
+        }
+        
+        targetFrame = getFrameById(nodeId);
+        if (!targetFrame) {
+          figma.ui.postMessage({
+            type: 'error',
+            message: 'Frame not found. Make sure the frame exists in the current file.'
+          });
+          return;
+        }
+      } else {
+        // Use currently selected frame
+        const selection = figma.currentPage.selection;
+        if (selection.length === 0) {
+          figma.ui.postMessage({
+            type: 'error',
+            message: 'No frame selected. Please select a frame or provide a frame link.'
+          });
+          return;
+        }
+        
+        const selected = selection[0];
+        if (selected.type !== 'FRAME' && selected.type !== 'COMPONENT' && selected.type !== 'COMPONENT_SET') {
+          figma.ui.postMessage({
+            type: 'error',
+            message: 'Selected element is not a frame. Please select a frame or provide a frame link.'
+          });
+          return;
+        }
+        
+        targetFrame = selected;
+      }
+      
+      // Find all top-most sub-frames
+      const subFrames = findTopMostSubFrames(targetFrame);
+      
+      if (subFrames.length === 0) {
         figma.ui.postMessage({
-          type: 'error',
-          message: 'Invalid frame link. Please provide a valid Figma frame URL.'
+          type: 'result',
+          links: [],
+          message: 'No sub-frames found in the selected frame.'
         });
         return;
       }
       
-      targetFrame = getFrameById(nodeId);
-      if (!targetFrame) {
-        figma.ui.postMessage({
-          type: 'error',
-          message: 'Frame not found. Make sure the frame exists in the current file.'
-        });
-        return;
-      }
-    } else {
-      // Use currently selected frame
-      const selection = figma.currentPage.selection;
-      if (selection.length === 0) {
-        figma.ui.postMessage({
-          type: 'error',
-          message: 'No frame selected. Please select a frame or provide a frame link.'
-        });
-        return;
-      }
+      // Generate links for each sub-frame - ensure all data is serializable
+      const links = subFrames.map(frame => ({
+        name: typeof frame.name === 'string' ? frame.name : 'Unnamed',
+        link: generateFigmaLink(frame),
+        id: typeof frame.id === 'string' ? frame.id : ''
+      }));
       
-      const selected = selection[0];
-      if (selected.type !== 'FRAME' && selected.type !== 'COMPONENT' && selected.type !== 'COMPONENT_SET') {
-        figma.ui.postMessage({
-          type: 'error',
-          message: 'Selected element is not a frame. Please select a frame or provide a frame link.'
-        });
-        return;
-      }
+      const parentName = typeof targetFrame.name === 'string' ? targetFrame.name : 'Unknown';
       
-      targetFrame = selected;
-    }
-    
-    // Find all top-most sub-frames
-    const subFrames = findTopMostSubFrames(targetFrame);
-    
-    if (subFrames.length === 0) {
       figma.ui.postMessage({
         type: 'result',
-        links: [],
-        message: 'No sub-frames found in the selected frame.'
+        links: links,
+        parentName: parentName
       });
-      return;
+    } catch (error) {
+      figma.ui.postMessage({
+        type: 'error',
+        message: 'Error processing request: ' + String(error)
+      });
     }
-    
-    // Generate links for each sub-frame
-    const links = subFrames.map(frame => ({
-      name: frame.name,
-      link: generateFigmaLink(frame),
-      id: frame.id
-    }));
-    
-    figma.ui.postMessage({
-      type: 'result',
-      links: links,
-      parentName: targetFrame.name
-    });
   }
   
   if (msg.type === 'get-selection') {
-    // Send current selection info
-    const selection = figma.currentPage.selection;
-    if (selection.length > 0) {
-      const selected = selection[0];
+    try {
+      // Send current selection info
+      const selection = figma.currentPage.selection;
+      if (selection.length > 0) {
+        const selected = selection[0];
+        // Ensure we only send serializable data
+        const nodeName = typeof selected.name === 'string' ? selected.name : 'Unknown';
+        const nodeType = typeof selected.type === 'string' ? selected.type : 'UNKNOWN';
+        figma.ui.postMessage({
+          type: 'selection-info',
+          name: nodeName,
+          nodeType: nodeType,
+          isFrame: nodeType === 'FRAME' || nodeType === 'COMPONENT' || nodeType === 'COMPONENT_SET'
+        });
+      } else {
+        figma.ui.postMessage({
+          type: 'selection-info',
+          name: null,
+          nodeType: null,
+          isFrame: false
+        });
+      }
+    } catch (error) {
       figma.ui.postMessage({
-        type: 'selection-info',
-        name: selected.name,
-        nodeType: selected.type,
-        isFrame: selected.type === 'FRAME' || selected.type === 'COMPONENT' || selected.type === 'COMPONENT_SET'
-      });
-    } else {
-      figma.ui.postMessage({
-        type: 'selection-info',
-        name: null,
-        nodeType: null,
-        isFrame: false
+        type: 'error',
+        message: 'Error getting selection info: ' + String(error)
       });
     }
   }
@@ -171,21 +190,29 @@ figma.ui.onmessage = async (msg) => {
 
 // Monitor selection changes
 figma.on('selectionchange', () => {
-  const selection = figma.currentPage.selection;
-  if (selection.length > 0) {
-    const selected = selection[0];
-    figma.ui.postMessage({
-      type: 'selection-changed',
-      name: selected.name,
-      nodeType: selected.type,
-      isFrame: selected.type === 'FRAME' || selected.type === 'COMPONENT' || selected.type === 'COMPONENT_SET'
-    });
-  } else {
-    figma.ui.postMessage({
-      type: 'selection-changed',
-      name: null,
-      nodeType: null,
-      isFrame: false
-    });
+  try {
+    const selection = figma.currentPage.selection;
+    if (selection.length > 0) {
+      const selected = selection[0];
+      // Ensure we only send serializable data
+      const nodeName = typeof selected.name === 'string' ? selected.name : 'Unknown';
+      const nodeType = typeof selected.type === 'string' ? selected.type : 'UNKNOWN';
+      figma.ui.postMessage({
+        type: 'selection-changed',
+        name: nodeName,
+        nodeType: nodeType,
+        isFrame: nodeType === 'FRAME' || nodeType === 'COMPONENT' || nodeType === 'COMPONENT_SET'
+      });
+    } else {
+      figma.ui.postMessage({
+        type: 'selection-changed',
+        name: null,
+        nodeType: null,
+        isFrame: false
+      });
+    }
+  } catch (error) {
+    // Silently handle errors in selection change monitoring
+    console.error('Error in selection change handler:', error);
   }
 });

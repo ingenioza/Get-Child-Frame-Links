@@ -2,7 +2,12 @@
 
 > **Extract all child frame links in seconds** — Perfect for sharing frame links with AI tools like Cursor
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ingenioza/Get-Child-Frame-Links/releases/tag/v1.0.0)
+[![Figma Community](https://img.shields.io/badge/Figma-Community-purple.svg)](https://www.figma.com/community/plugin)
+
 A Figma plugin that extracts links to all top-most sub-frames within a selected frame or frame link. This is particularly useful when working with large frames that contain many sub-frames, making it easier to share individual frame links with tools like Cursor for building Figma designs.
+
+**Now available in the Figma Community!** 🎉
 
 ## Features
 
@@ -50,6 +55,15 @@ npm run build
 npm run watch
 ```
 
+## Releases
+
+- **v1.0.0** - Initial release to Figma Community
+  - Extract child frame links from selected frames or frame URLs
+  - Copy individual or all links at once
+  - Real-time selection monitoring
+
+See all releases on [GitHub Releases](https://github.com/ingenioza/Get-Child-Frame-Links/releases)
+
 ## Branch Structure
 
 - **develop**: Default development branch
@@ -57,8 +71,19 @@ npm run watch
 
 ## Installation
 
+### From Figma Community (Recommended)
+
+1. Open Figma
+2. Go to **Plugins** > **Browse plugins in Community**
+3. Search for "Get Child Frame Links"
+4. Click **Install** or **Run**
+
+### Development Installation
+
+For local development:
+
 1. Build the plugin: `npm run build`
-2. In Figma, go to Plugins > Development > Import plugin from manifest...
+2. In Figma, go to **Plugins** > **Development** > **Import plugin from manifest...**
 3. Select the `manifest.json` file from this directory
 
 ## Contributing

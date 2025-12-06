@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      padding: 16px;
+      background: #ffffff;
+      color: #000000;
+    }
+    
+    h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #000000;
+    }
+    
+    .section {
+      margin-bottom: 20px;
+    }
+    
+    .input-group {
+      margin-bottom: 12px;
+    }
+    
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #000000;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #18a0fb;
+    }
+    
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #18a0fb;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    
+    button:hover {
+      background: #1592e6;
+    }
+    
+    button:active {
+      background: #0d7fc7;
+    }
+    
+    button:disabled {
+      background: #e5e5e5;
+      color: #999999;
+      cursor: not-allowed;
+    }
+    
+    .secondary-button {
+      background: #f0f0f0;
+      color: #000000;
+    }
+    
+    .secondary-button:hover {
+      background: #e0e0e0;
+    }
+    
+    .info {
+      padding: 8px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #666666;
+      margin-bottom: 12px;
+    }
+    
+    .error {
+      padding: 8px;
+      background: #ffe5e5;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #d32f2f;
+      margin-bottom: 12px;
+    }
+    
+    .success {
+      padding: 8px;
+      background: #e5f5e5;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #2e7d32;
+      margin-bottom: 12px;
+    }
+    
+    .links-container {
+      margin-top: 16px;
+    }
+    
+    .link-item {
+      padding: 10px;
+      background: #f9f9f9;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    
+    .link-item-name {
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #000000;
+    }
+    
+    .link-item-url {
+      font-size: 11px;
+      color: #18a0fb;
+      word-break: break-all;
+      margin-bottom: 6px;
+    }
+    
+    .copy-button {
+      padding: 4px 8px;
+      background: #f0f0f0;
+      color: #000000;
+      border: none;
+      border-radius: 3px;
+      font-size: 10px;
+      cursor: pointer;
+      width: auto;
+      margin: 0;
+    }
+    
+    .copy-button:hover {
+      background: #e0e0e0;
+    }
+    
+    .copy-all-button {
+      margin-top: 12px;
+    }
+    
+    .divider {
+      height: 1px;
+      background: #e5e5e5;
+      margin: 16px 0;
+    }
+    
+    .selection-info {
+      font-size: 11px;
+      color: #666666;
+      padding: 8px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Get Child Frame Links</h2>
+  
+  <div class="section">
+    <div class="selection-info" id="selection-info">
+      No frame selected
+    </div>
+    
+    <div class="input-group">
+      <label for="frame-link">Frame Link (optional):</label>
+      <input type="text" id="frame-link" placeholder="https://www.figma.com/file/..." />
+      <div class="info" style="margin-top: 6px;">
+        Leave empty to use the currently selected frame
+      </div>
+    </div>
+    
+    <button id="get-links-btn">Get Sub-Frame Links</button>
+    <button class="secondary-button" id="use-selection-btn">Use Selected Frame</button>
+  </div>
+  
+  <div id="message-container"></div>
+  
+  <div id="links-container" class="links-container" style="display: none;">
+    <h2 id="result-title"></h2>
+    <div id="links-list"></div>
+    <button class="copy-all-button secondary-button" id="copy-all-btn">Copy All Links</button>
+  </div>
+
+  <script>
+    const frameLinkInput = document.getElementById('frame-link');
+    const getLinksBtn = document.getElementById('get-links-btn');
+    const useSelectionBtn = document.getElementById('use-selection-btn');
+    const messageContainer = document.getElementById('message-container');
+    const linksContainer = document.getElementById('links-container');
+    const linksList = document.getElementById('links-list');
+    const resultTitle = document.getElementById('result-title');
+    const selectionInfo = document.getElementById('selection-info');
+    const copyAllBtn = document.getElementById('copy-all-btn');
+    
+    // Request initial selection info
+    parent.postMessage({ pluginMessage: { type: 'get-selection' } }, '*');
+    
+    // Handle messages from plugin
+    onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      
+      if (msg.type === 'selection-info' || msg.type === 'selection-changed') {
+        if (msg.isFrame) {
+          selectionInfo.textContent = `Selected: ${msg.name} (${msg.nodeType})`;
+          selectionInfo.style.background = '#e5f5e5';
+          selectionInfo.style.color = '#2e7d32';
+        } else if (msg.name) {
+          selectionInfo.textContent = `Selected: ${msg.name} (not a frame)`;
+          selectionInfo.style.background = '#fff3cd';
+          selectionInfo.style.color = '#856404';
+        } else {
+          selectionInfo.textContent = 'No frame selected';
+          selectionInfo.style.background = '#f5f5f5';
+          selectionInfo.style.color = '#666666';
+        }
+      }
+      
+      if (msg.type === 'error') {
+        showMessage(msg.message, 'error');
+        linksContainer.style.display = 'none';
+      }
+      
+      if (msg.type === 'result') {
+        showMessage(
+          msg.message || `Found ${msg.links.length} sub-frame(s) in "${msg.parentName}"`,
+          'success'
+        );
+        displayLinks(msg.links);
+      }
+    };
+    
+    function showMessage(message, type) {
+      messageContainer.innerHTML = `<div class="${type}">${message}</div>`;
+    }
+    
+    function displayLinks(links) {
+      linksList.innerHTML = '';
+      
+      if (links.length === 0) {
+        linksContainer.style.display = 'none';
+        return;
+      }
+      
+      resultTitle.textContent = `Sub-Frames (${links.length}):`;
+      linksContainer.style.display = 'block';
+      
+      links.forEach((linkData, index) => {
+        const linkItem = document.createElement('div');
+        linkItem.className = 'link-item';
+        linkItem.innerHTML = `
+          <div class="link-item-name">${linkData.name}</div>
+          <div class="link-item-url">${linkData.link}</div>
+          <button class="copy-button" data-link="${linkData.link}">Copy Link</button>
+        `;
+        linksList.appendChild(linkItem);
+      });
+      
+      // Add click handlers for copy buttons
+      document.querySelectorAll('.copy-button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const link = e.target.getAttribute('data-link');
+          copyToClipboard(link);
+          e.target.textContent = 'Copied!';
+          setTimeout(() => {
+            e.target.textContent = 'Copy Link';
+          }, 2000);
+        });
+      });
+    }
+    
+    function copyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+    
+    function getAllLinks() {
+      const links = [];
+      document.querySelectorAll('.link-item-url').forEach(el => {
+        links.push(el.textContent);
+      });
+      return links;
+    }
+    
+    getLinksBtn.addEventListener('click', () => {
+      const frameLink = frameLinkInput.value.trim();
+      parent.postMessage({
+        pluginMessage: {
+          type: 'get-sub-frames',
+          frameLink: frameLink || null
+        }
+      }, '*');
+    });
+    
+    useSelectionBtn.addEventListener('click', () => {
+      frameLinkInput.value = '';
+      parent.postMessage({
+        pluginMessage: {
+          type: 'get-sub-frames',
+          frameLink: null
+        }
+      }, '*');
+    });
+    
+    copyAllBtn.addEventListener('click', () => {
+      const allLinks = getAllLinks();
+      if (allLinks.length > 0) {
+        const linksText = allLinks.join('\n');
+        copyToClipboard(linksText);
+        copyAllBtn.textContent = 'Copied All!';
+        setTimeout(() => {
+          copyAllBtn.textContent = 'Copy All Links';
+        }, 2000);
+      }
+    });
+    
+    // Allow Enter key to trigger get links
+    frameLinkInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        getLinksBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>

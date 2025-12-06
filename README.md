@@ -1,40 +1,64 @@
-Below are the steps to get your plugin running. You can also find instructions at:
+# Get Child Frame Links - Figma Plugin
 
-  https://www.figma.com/plugin-docs/plugin-quickstart-guide/
+A Figma plugin that extracts links to all top-most sub-frames within a selected frame or frame link. This is particularly useful when working with large frames that contain many sub-frames, making it easier to share individual frame links with tools like Cursor for building Figma designs.
 
-This plugin template uses Typescript and NPM, two standard tools in creating JavaScript applications.
+## Features
 
-First, download Node.js which comes with NPM. This will allow you to install TypeScript and other
-libraries. You can find the download link here:
+- **Frame Link Input**: Paste a Figma frame URL to extract its child frame links
+- **Selection Support**: Automatically use the currently selected frame in Figma
+- **Top-Most Sub-Frames**: Finds only direct child frames (not nested sub-frames)
+- **Copy Links**: Copy individual links or all links at once
+- **Real-time Selection Monitoring**: Shows current selection status in the plugin UI
 
-  https://nodejs.org/en/download/
+## How to Use
 
-Next, install TypeScript using the command:
+1. **Using Selected Frame**:
+   - Select a frame in Figma
+   - Open the plugin
+   - Click "Get Sub-Frame Links" or "Use Selected Frame"
+   - All top-most sub-frame links will be displayed
 
-  npm install -g typescript
+2. **Using Frame Link**:
+   - Copy a Figma frame URL
+   - Paste it into the "Frame Link" input field
+   - Click "Get Sub-Frame Links"
+   - All top-most sub-frame links will be displayed
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+3. **Copying Links**:
+   - Click "Copy Link" on any individual frame link
+   - Or click "Copy All Links" to copy all links at once (one per line)
 
-  npm install --save-dev @figma/plugin-typings
+## Development
 
-If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
-is already valid Typescript code.
+### Setup
 
-TypeScript adds type annotations to variables. This allows code editors such as Visual Studio Code
-to provide information about the Figma API while you are writing code, as well as help catch bugs
-you previously didn't notice.
+```bash
+npm install
+```
 
-For more information, visit https://www.typescriptlang.org/
+### Build
 
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
-for the browser to run.
+```bash
+npm run build
+```
 
-We recommend writing TypeScript code using Visual Studio code:
+### Watch Mode
 
-1. Download Visual Studio Code if you haven't already: https://code.visualstudio.com/.
-2. Open this directory in Visual Studio Code.
-3. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-    then select "npm: watch". You will have to do this again every time
-    you reopen Visual Studio Code.
+```bash
+npm run watch
+```
 
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
+## Branch Structure
+
+- **develop**: Default development branch
+- **main**: Production branch (merged from develop when ready)
+
+## Installation
+
+1. Build the plugin: `npm run build`
+2. In Figma, go to Plugins > Development > Import plugin from manifest...
+3. Select the `manifest.json` file from this directory
+
+## License
+
+Copyright © inGenIO Software Solutions
